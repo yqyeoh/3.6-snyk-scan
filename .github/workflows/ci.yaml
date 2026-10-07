@@ -25,7 +25,7 @@ jobs:
       status: ${{ job.status }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v7
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v6
@@ -34,7 +34,7 @@ jobs:
         aws-region: ${{ vars.AWS_REGION }}
 
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
+      uses: hashicorp/setup-terraform@v4
 
     - name: Terraform init
       run: terraform init
@@ -47,7 +47,7 @@ jobs:
       id: validate
       run: terraform validate -no-color
 
-    - uses: terraform-linters/setup-tflint@v3
+    - uses: terraform-linters/setup-tflint@v6
       with:
         tflint_version: latest
     
@@ -60,6 +60,10 @@ jobs:
     - name: Run TFLint
       run: tflint -f compact
 
+    - name: Install Lambda dependencies
+      working-directory: src
+      run: npm ci --omit=dev
+
     - name: Terraform plan
       run: terraform plan
 
@@ -70,7 +74,7 @@ jobs:
       status: ${{ job.status }}
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
       - name: Install Snyk CLI
         run: npm install -g snyk
       - name: Run Snyk to check for 3rd party vulnerabilities
@@ -78,9 +82,9 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high
+          args: --all-projects --severity-threshold=high
       - name: Run Snyk to check for vulnerabilities in Open Source Components
-        run: snyk test --severity-threshold=high
+        run: snyk test --all-projects --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       - name: Run Snyk to check for vulnerabilities in Terraform project
